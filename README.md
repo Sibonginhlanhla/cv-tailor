@@ -1,6 +1,6 @@
 # CV Tailor
 
-**Live site:** YOUR_SWA_URL
+**Live site:** [YOUR_SWA_URL](https://salmon-water-08238c11e.4.azurestaticapps.net/)
 
 Build a CV step by step, then tailor it to a specific job: paste the advert and get a keyword match score plus suggested rewrites of your profile and achievements. You accept, edit or dismiss each suggestion, and the AI is only allowed to reword what's already in your CV.
 
