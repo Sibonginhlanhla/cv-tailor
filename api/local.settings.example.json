@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "",
+    "MOCK_AI": "1",
+    "PROJECT_ENDPOINT": "https://<your-resource>.services.ai.azure.com/api/projects/<your-project>",
+    "MODEL_DEPLOYMENT": "<your-model-deployment-name>",
+    "AZ_TENANT_ID": "",
+    "AZ_CLIENT_ID": "",
+    "AZ_CLIENT_SECRET": ""
+  }
+}

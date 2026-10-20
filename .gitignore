@@ -1,0 +1,34 @@
+# Dependencies (both the app and the api folder)
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Secrets: never commit these
+api/local.settings.json
+.env
+.env.*
+!.env.example
+*.local
+
+# Azure Functions local files
+api/bin/
+api/obj/
+.azurite/
+__azurite_db*
+__blobstorage__/
+__queuestorage__/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.sw?
