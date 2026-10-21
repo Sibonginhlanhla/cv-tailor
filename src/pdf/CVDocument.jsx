@@ -26,7 +26,7 @@ function theme(template, accent) {
     name: { fontSize: 24, fontWeight: 700, lineHeight: 1.15 },
     title: { fontSize: 12, color: accent, marginTop: 2 },
     contact: { fontSize: 9, color: MUTED, marginTop: 6 },
-    link: { color: MUTED, textDecoration: 'none' },
+    link: { color: accent, textDecoration: 'none' },
     section: { marginTop: 14 },
     heading: { fontSize: 11.5, fontWeight: 700, color: accent, paddingBottom: 3, marginBottom: 7, borderBottomWidth: 0.75, borderBottomColor: light },
     entry: { marginBottom: 8 },
@@ -105,13 +105,28 @@ function theme(template, accent) {
 }
 
 const clean = (list) => list.filter((b) => b.trim());
+
+// Long links and emails have no spaces, so the PDF engine can't wrap them and they
+// spill out of narrow columns. Split them after / - . _ @ (and every 16 characters
+// for very long runs), and let each piece wrap as its own box: no hyphens are added.
+function pieces(text) {
+  return String(text)
+    .split(/(?<=[/\-._@])/)
+    .flatMap((p) => (p.length > 16 ? p.match(/.{1,16}/g) : [p]));
+}
+
+function Breakable({ text, src, style }) {
+  const parts = pieces(text).map((p, i) => <Text key={i} style={style}>{p}</Text>);
+  const row = <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{parts}</View>;
+  return src ? <Link src={src} style={{ textDecoration: 'none' }}>{row}</Link> : row;
+}
 const hasContent = (cv, key) => (key === 'summary' ? cv.summary.trim() : cv[key]?.length > 0);
 const href = (v) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
 
 function contactItems(p) {
   return [
     p.email && { text: p.email, src: `mailto:${p.email}` },
-    p.phone && { text: p.phone },
+    p.phone && { text: p.phone, src: `tel:${p.phone.replace(/[^\d+]/g, '')}` },
     p.location && { text: p.location },
     p.linkedin && { text: p.linkedin, src: href(p.linkedin) },
     p.website && { text: p.website, src: href(p.website) },
@@ -175,7 +190,8 @@ function SectionBody({ cv, id, s, stacked }) {
       ));
     case 'projects':
       return cv.projects.map((p) => (
-        <Entry key={p.id} s={s} title={p.name} org={p.tech} meta={p.link}>
+        <Entry key={p.id} s={s} title={p.name} org={p.tech}
+          meta={p.link ? <Link src={href(p.link)} style={s.link}>{p.link}</Link> : null}>
           {p.description ? <Text style={s.details}>{p.description}</Text> : null}
         </Entry>
       ));
@@ -270,9 +286,9 @@ export default function CVDocument({ cv }) {
               <View style={s.section}>
                 <Text style={s.heading}>Contact</Text>
                 {contactItems(p).map((i) => (
-                  <Text key={i.text} style={{ marginBottom: 3 }}>
-                    {i.src ? <Link src={i.src} style={s.link}>{i.text}</Link> : i.text}
-                  </Text>
+                  <View key={i.text} style={{ marginBottom: 3 }}>
+                    <Breakable text={i.text} src={i.src} style={i.src ? s.link : null} />
+                  </View>
                 ))}
               </View>
               {visible.filter((id) => SIDEBAR.has(id)).map((id) => <Section key={id} cv={cv} id={id} s={s} stacked />)}
