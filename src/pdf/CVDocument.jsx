@@ -107,29 +107,41 @@ function theme(template, accent) {
 const clean = (list) => list.filter((b) => b.trim());
 
 // Long links and emails have no spaces, so the PDF engine can't wrap them and they
-// spill out of narrow columns. Split them after / - . _ @ (and every 16 characters
-// for very long runs), and let each piece wrap as its own box: no hyphens are added.
-function pieces(text) {
-  return String(text)
+// spill out of narrow columns. We break them ourselves: split after / - . _ @, pack
+// the pieces into lines of at most 22 characters (which fit the sidebar at 9pt), and
+// join them with real line breaks in a single Text. One Text measures its own height
+// reliably, so the next line never overlaps, and no hyphens are added.
+const LINE_CHARS = 22;
+
+function wrapLines(text) {
+  const parts = String(text)
     .split(/(?<=[/\-._@])/)
-    .flatMap((p) => (p.length > 16 ? p.match(/.{1,16}/g) : [p]));
+    .flatMap((p) => (p.length > LINE_CHARS ? p.match(new RegExp(`.{1,${LINE_CHARS}}`, 'g')) : [p]));
+  const lines = [];
+  for (const part of parts) {
+    const last = lines.length - 1;
+    if (last >= 0 && (lines[last] + part).length <= LINE_CHARS) lines[last] += part;
+    else lines.push(part);
+  }
+  return lines.join('\n');
 }
 
 function Breakable({ text, src, style }) {
-  const parts = pieces(text).map((p, i) => <Text key={i} style={style}>{p}</Text>);
-  const row = <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{parts}</View>;
-  return src ? <Link src={src} style={{ textDecoration: 'none' }}>{row}</Link> : row;
+  const body = <Text style={style}>{wrapLines(text)}</Text>;
+  return src ? <Link src={src} style={{ textDecoration: 'none' }}>{body}</Link> : body;
 }
+
 const hasContent = (cv, key) => (key === 'summary' ? cv.summary.trim() : cv[key]?.length > 0);
 const href = (v) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
+const shortUrl = (v) => v.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
 
 function contactItems(p) {
   return [
     p.email && { text: p.email, src: `mailto:${p.email}` },
     p.phone && { text: p.phone, src: `tel:${p.phone.replace(/[^\d+]/g, '')}` },
     p.location && { text: p.location },
-    p.linkedin && { text: p.linkedin, src: href(p.linkedin) },
-    p.website && { text: p.website, src: href(p.website) },
+    p.linkedin && { text: shortUrl(p.linkedin), src: href(p.linkedin) },
+    p.website && { text: shortUrl(p.website), src: href(p.website) },
   ].filter(Boolean);
 }
 
@@ -191,7 +203,7 @@ function SectionBody({ cv, id, s, stacked }) {
     case 'projects':
       return cv.projects.map((p) => (
         <Entry key={p.id} s={s} title={p.name} org={p.tech}
-          meta={p.link ? <Link src={href(p.link)} style={s.link}>{p.link}</Link> : null}>
+          meta={p.link ? <Link src={href(p.link)} style={s.link}>{shortUrl(p.link)}</Link> : null}>
           {p.description ? <Text style={s.details}>{p.description}</Text> : null}
         </Entry>
       ));
