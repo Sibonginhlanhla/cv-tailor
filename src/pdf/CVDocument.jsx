@@ -107,10 +107,10 @@ function theme(template, accent) {
 const clean = (list) => list.filter((b) => b.trim());
 
 // Long links and emails have no spaces, so the PDF engine can't wrap them and they
-// spill out of narrow columns. We break them ourselves: split after / - . _ @, pack
-// the pieces into lines of at most 22 characters (which fit the sidebar at 9pt), and
-// join them with real line breaks in a single Text. One Text measures its own height
-// reliably, so the next line never overlaps, and no hyphens are added.
+// spill out of narrow columns. We break them ourselves: split after / - . _ @ and pack
+// the pieces into lines of at most 22 characters (which fit the sidebar at 9pt).
+// Each line is its own Text, stacked like the skills list, with the link inside it,
+// so every line gets its own measured height and lines can never overlap.
 const LINE_CHARS = 22;
 
 function wrapLines(text) {
@@ -123,12 +123,13 @@ function wrapLines(text) {
     if (last >= 0 && (lines[last] + part).length <= LINE_CHARS) lines[last] += part;
     else lines.push(part);
   }
-  return lines.join('\n');
+  return lines;
 }
 
 function Breakable({ text, src, style }) {
-  const body = <Text style={style}>{wrapLines(text)}</Text>;
-  return src ? <Link src={src} style={{ textDecoration: 'none' }}>{body}</Link> : body;
+  return wrapLines(text).map((line, i) => (
+    <Text key={i}>{src ? <Link src={src} style={style}>{line}</Link> : line}</Text>
+  ));
 }
 
 const hasContent = (cv, key) => (key === 'summary' ? cv.summary.trim() : cv[key]?.length > 0);
